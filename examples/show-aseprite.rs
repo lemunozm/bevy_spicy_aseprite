@@ -17,6 +17,7 @@ mod sprites {
 
 fn main() {
     App::new()
+        .insert_resource(Msaa { samples: 1 })
         .add_plugins(DefaultPlugins)
         .add_plugin(AsepritePlugin)
         .add_startup_system(setup)
@@ -37,16 +38,18 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     };
 
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    commands.spawn_bundle(AsepriteBundle {
-        aseprite: sprites::Crow::sprite(),
-        animation: AsepriteAnimation::from(sprites::Crow::tags::FLAP_WINGS),
-        transform: Transform {
-            scale: Vec3::splat(4.),
-            translation: Vec3::new(0., 150., 0.),
+    commands
+        .spawn_bundle(AsepriteBundle {
+            aseprite: sprites::Crow::sprite(),
+            animation: AsepriteAnimation::from(sprites::Crow::tags::FLAP_WINGS),
+            transform: Transform {
+                scale: Vec3::splat(4.),
+                translation: Vec3::new(0., 150., 0.),
+                ..Default::default()
+            },
             ..Default::default()
-        },
-        ..Default::default()
-    }).insert(CrowTag);
+        })
+        .insert(CrowTag);
     commands.spawn_bundle(Text2dBundle {
         text: Text {
             alignment: TextAlignment {
@@ -136,7 +139,10 @@ fn toggle_sprite(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AsepriteAn
     }
 }
 
-fn change_animation(keys: Res<Input<KeyCode>>, mut aseprites: Query<&mut AsepriteAnimation, With<CrowTag>>) {
+fn change_animation(
+    keys: Res<Input<KeyCode>>,
+    mut aseprites: Query<&mut AsepriteAnimation, With<CrowTag>>,
+) {
     if keys.just_pressed(KeyCode::Key1) {
         for mut crow_anim in aseprites.iter_mut() {
             *crow_anim = AsepriteAnimation::from(sprites::Crow::tags::GROOVE);

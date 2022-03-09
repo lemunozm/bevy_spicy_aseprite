@@ -11,6 +11,7 @@ extern crate proc_macro;
 struct AsepriteDeclaration {
     vis: Visibility,
     name: Ident,
+    prefix_path: LitStr,
     path: LitStr,
 }
 
@@ -19,21 +20,34 @@ impl Parse for AsepriteDeclaration {
         let vis: Visibility = input.parse()?;
         let name: Ident = input.parse()?;
         input.parse::<Token!(,)>()?;
+        let prefix_path: LitStr = input.parse()?;
+        input.parse::<Token!(,)>()?;
         let path: LitStr = input.parse()?;
 
-        Ok(AsepriteDeclaration { vis, name, path })
+        Ok(AsepriteDeclaration {
+            vis,
+            name,
+            prefix_path,
+            path,
+        })
     }
 }
 
 #[proc_macro]
 #[proc_macro_error]
 pub fn aseprite(input: TokenStream) -> TokenStream {
-    let AsepriteDeclaration { vis, name, path } = parse_macro_input!(input as AsepriteDeclaration);
+    let AsepriteDeclaration {
+        vis,
+        name,
+        prefix_path,
+        path,
+    } = parse_macro_input!(input as AsepriteDeclaration);
 
-    let aseprite = match Aseprite::from_path(path.value()) {
+    let build_path = format!("{}/{}", prefix_path.value(), path.value());
+    let aseprite = match Aseprite::from_path(&build_path) {
         Ok(aseprite) => aseprite,
         Err(err) => {
-            abort!(path, "Could not load file."; note = err);
+            abort!(build_path, "Could not load file."; note = err);
         }
     };
 
